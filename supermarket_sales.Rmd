@@ -1,0 +1,273 @@
+---
+title: "SuperMarketSales"
+author: "Aditya Pansari"
+date: "2024-01-26"
+output: html_document
+---
+# Super Market Sales
+### Let's see what are the pre installed libraries in the system
+```{r}
+installed.packages()
+
+```
+### Let's see what are the packages priorly loaded
+```{r}
+search()
+```
+### Let's set the file path and load the data into the variable
+```{r}
+file_path=("D:/SuperMarketSales/supermarket_sales - Sheet1.csv")
+data<-read.csv(file_path) 
+```
+### let's get the summary of the data
+```{r}
+summary(data)
+```
+###Let's look into the fisrt 6 Rows
+```{r}
+head(data)
+```
+### viewing the class of each variables
+```{r}
+class(data$Invoice.ID)
+class(data$Branch)
+class(data$City)
+class(data$Customer.type)
+class(data$Gender)
+class(data$Product.line)
+class(data$Unit.price)
+class(data$Quantity)
+class(data$Tax.5.)
+class(data$Total)
+class(data$Date)
+class(data$Time)
+class(data$Payment)
+class(data$cogs)
+class(data$gross.margin.percentage)
+class(data$gross.income)
+class(data$Rating)
+```
+```{r}
+class(data)
+```
+```{r}
+is.blank <- function(x) {
+  ifelse(is.na(x), TRUE, ifelse(is.character(x), trimws(x) == "", FALSE))}
+```
+### Replace blank values with NA in the entire data frame
+```{r}
+data[data == ""] <- NA
+data[sapply(data, is.blank)] <- NA
+```
+
+```{r}
+str(data)
+```
+
+```{r}
+duplicates <- data[duplicated(data), ]
+print(duplicates)
+print(nrow(duplicates))
+```
+#Checking for NAs within each column/variable
+```{r}
+sum_na <- colSums(is.na(data))
+```
+# Display the results
+```{r}
+print(sum_na)
+```
+```{r}
+library(tidyr)      #Data manipulation and visualization
+library(dplyr)      # Data manipulation
+library(ggplot2)    # Data visualization
+library(lubridate)  # Date and time manipulation
+library(readxl)
+```
+
+### Bar plot for the distribution of customer types
+```{r}
+ggplot(data, aes(x = Customer.type, fill = Customer.type)) +
+  geom_bar() +
+  geom_text(stat = 'count', aes(label = after_stat(count)), vjust = -0.5, color = 'black', size = 4) +  
+  ggtitle("Distribution of Customer Types")
+
+```
+
+###  Barplot of gender distribution
+```{r}
+ggplot(data, aes(x = Gender, fill = Gender)) +
+  geom_bar() +
+  geom_text(stat = 'count', aes(label = after_stat(count)), vjust = -0.5, color = 'black', size = 4) +  
+  ggtitle("Gender Distribution of Customers")
+```
+
+### Product Line categories distribution barplot
+```{r}
+ggplot(data, aes(x = Product.line, fill = Product.line)) +
+  geom_bar() +
+  geom_text(stat = 'count', aes(label = after_stat(count)), vjust = -0.5, color = 'black', size = 4) +  
+  ggtitle("Product Line Distribution") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) # rotates the labels on the x axis
+```
+
+### Payment methods used by customers
+```{r}
+ggplot(data, aes(x = Payment, fill = Payment)) +
+  geom_bar() +
+  geom_text(stat = 'count', aes(label = after_stat(count)), vjust = -0.5, color = 'black', size = 4) +  
+  ggtitle("Payment Method Distribution")
+```
+
+### Ratings of customer shopping experiences
+```{r}
+ggplot(data, aes(x = Rating, fill = factor(Rating))) +
+  geom_bar(width = 0.07) + 
+  ggtitle("Distribution of Ratings")
+```
+
+```{r}
+data %>% filter(Tax.5. == 0.5085)
+```
+
+```{r}
+data %>%
+group_by(Product.line) %>%
+filter(Tax.5. >= 25.00)
+```
+
+```{r}
+Gender_category <- data %>%
+group_by(Gender, Product.line) %>%
+summarise(count= n())
+Gender_category
+```
+
+```{r}
+library(ggrepel)
+```
+
+```{r}
+ggplot(data = Gender_category, aes(x = Product.line, y= count)) + geom_bar(stat = "identity", width = 0.6, aes(fill = Gender)) + coord_flip() +
+ geom_text_repel(aes(label = count)) + theme_minimal()+ theme(axis.text.x = element_text(angle = 90)) + scale_fill_brewer(palette="Spectral")
+```
+
+```{r}
+result <- data %>%
+group_by(Product.line ) %>%
+summarise("Cost_of_goods_sold" = mean(cogs))
+result
+```
+
+```{r}
+branchcosts <- data %>%
+group_by(Product.line,Branch ) %>%
+summarise("Cost_of_goods_sold" = mean(cogs))
+branchcosts
+```
+
+```{r}
+ggplot(data=result, aes( x= Product.line, y= Cost_of_goods_sold )) +geom_point(aes(colour = Product.line)) + theme(axis.text.x = element_text(angle = 60)) + scale_fill_brewer(palette="Spectral")
+```
+
+```{r}
+ggplot(data=result, aes( x= Product.line,y=Cost_of_goods_sold)) +geom_bar(stat = "identity", width = 0.6,aes(fill = Product.line)) +
+labs(x = "Categories", y = "COGS", title = "Cost per category") +theme_minimal() + theme(axis.text.x = element_text(angle = 90)) + scale_fill_brewer(palette="Spectral")
+```
+
+```{r}
+branch_products <- data %>%
+group_by(Branch, Product.line) %>%
+summarise(count= n())
+branch_products
+```
+
+```{r}
+data %>%
+group_by(Branch) %>%
+summarise("Quantity of goods sold per branch" = sum(Quantity))
+```
+
+```{r}
+ggplot(data = branch_products, aes(x= Branch, y= count, fill = Product.line)) + geom_bar(stat = "identity") +
+  labs(title = "Branch wise sale of categories",
+       x = "Branch",
+       y = "Units sold",
+       fill = "Legend")   + theme(axis.text.x = element_text(angle = 90)) +theme_minimal() + scale_fill_brewer(palette="Spectral")
+```
+
+```{r}
+data %>%
+group_by(Customer.type) %>%
+summarise("Purchasequantity" = sum(Total))
+```
+
+```{r}
+data %>%
+group_by(Customer.type) %>%
+summarise(count = n())
+```
+
+```{r}
+Citymember <- data %>%
+group_by(City,Customer.type) %>%
+summarise(count=n())
+Citymember
+```
+
+```{r}
+ggplot(data = Citymember, aes(x= City, y= count, fill = Customer.type)) + geom_bar(stat = "identity") +
+  labs(title = "Member/customer by cities",
+       x = "City",
+       y = "Customers",
+       fill = "Legend") + geom_text_repel(aes(label = count)) + theme_minimal() + scale_fill_brewer(palette="Spectral")
+```
+
+```{r}
+Totalrevenue <- data %>%
+group_by(City) %>%
+summarise("Gross_revenue" = sum(Total))
+Totalrevenue
+```
+
+```{r}
+ggplot(data= Totalrevenue, aes(x= City, y= Gross_revenue))+ geom_bar(stat= "identity", width = 0.5, fill = "#75ae97", colour ="White")
+```
+
+
+```{r}
+COGScity <- data%>%
+group_by(City) %>%
+summarise("Cost_of_goods_sold" = sum(cogs))
+COGScity
+```
+
+```{r}
+citinm <- unique(data$City)
+citinm
+```
+
+```{r}
+citystats <- data.frame(City_name = citinm,Gross_revenue =Totalrevenue$Gross_revenue,Cost_of_good_sold =COGScity$Cost_of_goods_sold)
+citystats
+```
+
+```{r}
+citystats$grossprofit <- citystats$Gross_revenue - citystats$Cost_of_good_sold
+citystats
+```
+
+
+```{r}
+ggplot(data = citystats, aes(x= City_name, y= grossprofit)) +geom_bar(stat = "identity", width = 0.5, fill = "#f56400") +theme_minimal()
+```
+
+```{r}
+ggplot(data= data, aes(x= Total)) + geom_histogram(binwidth = 15, fill= "#5B6A87", colour = "Black") +
+xlab("Total bill prices") + ylab("Count of bills") + theme(axis.title.x = element_text(colour = "red", size = 10), axis.title.y = element_text(colour = "Red", size = 10)) + ggtitle("Total bill")
+```
+
+```{r}
+
+```
+
